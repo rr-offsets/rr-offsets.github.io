@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Files</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f14;
+      --surface:  #161920;
+      --border:   #252a35;
+      --accent:   #5b8fff;
+      --accent2:  #a78bfa;
+      --text:     #e8eaf0;
+      --muted:    #6b7280;
+      --danger:   #f87171;
+      --success:  #34d399;
+      --radius:   12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d0f14 0%, #161336 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 50% -20%, rgba(91,143,255,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    header h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .02em;
+    }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 0;
+    }
+
+    /* ── Admin panel ── */
+    .admin-toggle {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 32px;
+    }
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: var(--radius);
+      padding: 8px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    .admin-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 48px;
+      display: none;
+    }
+    .admin-panel.open { display: block; }
+
+    .admin-panel h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+
+    .field-row.full { grid-template-columns: 1fr; }
+
+    input[type="text"], input[type="url"], select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .92rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--muted); }
+
+    .btn-add {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: .92rem;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      margin-top: 4px;
+    }
+    .btn-add:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-add:active { transform: translateY(0); }
+
+    .status-msg {
+      font-size: .85rem;
+      margin-top: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 1.2em;
+    }
+    .status-msg.ok  { color: var(--success); }
+    .status-msg.err { color: var(--danger); }
+
+    /* ── Files grid ── */
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .file-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color .2s, transform .2s;
+      position: relative;
+    }
+    .file-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+    .file-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(91,143,255,.2), rgba(167,139,250,.2));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .file-name {
+      font-weight: 600;
+      font-size: .98rem;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .file-desc {
+      color: var(--muted);
+      font-size: .84rem;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .file-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-dl {
+      flex: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: .85rem;
+      padding: 9px 0;
+      cursor: pointer;
+      transition: opacity .2s;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn-dl:hover { opacity: .82; }
+
+    .btn-remove {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: .85rem;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+      display: none;
+    }
+    .btn-remove:hover { border-color: var(--danger); color: var(--danger); }
+
+    .admin-mode .btn-remove { display: block; }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: .9rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📁 My Files</h1>
+  <p>// click a file to download</p>
+</header>
+
+<main>
+  <div class="admin-toggle">
+    <button class="btn-ghost" id="toggleAdmin">⚙ Manage files</button>
+  </div>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="adminPanel">
+    <h2>// Add a file</h2>
+    <div class="field-row">
+      <input type="text" id="inName"  placeholder="File name  (e.g. Setup.exe)"/>
+      <input type="text" id="inSize"  placeholder="Size  (e.g. 4.2 MB) — optional"/>
+    </div>
+    <div class="field-row">
+      <input type="text" id="inDesc"  placeholder="Short description — optional"/>
+      <select id="inIcon">
+        <option value="📦">📦 Archive / General</option>
+        <option value="💿">💿 Installer / App</option>
+        <option value="🖼️">🖼️ Image</option>
+        <option value="🎬">🎬 Video</option>
+        <option value="🎵">🎵 Audio</option>
+        <option value="📄">📄 Document</option>
+        <option value="🗜️">🗜️ ZIP / RAR</option>
+        <option value="⚙️">⚙️ Script / Config</option>
+      </select>
+    </div>
+    <div class="field-row full">
+      <input type="url" id="inUrl" placeholder="Download URL  (direct link to the file)"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <button class="btn-add" id="btnAdd">Add file</button>
+      <span class="status-msg" id="statusMsg"></span>
+    </div>
+  </div>
+
+  <!-- File list -->
+  <div class="section-label">Available files</div>
+  <div class="files-grid" id="filesGrid"></div>
+</main>
+
+<script>
+  // ── Storage key ──
+  const STORE = 'myfiles_v1';
+
+  // ── Load saved files (or use demo defaults) ──
+  let files = JSON.parse(localStorage.getItem(STORE) || 'null') || [
+    {
+      id: 1,
+      name: 'ReadMe.txt',
+      desc: 'Instructions and notes for this site.',
+      size: '2 KB',
+      icon: '📄',
+      url: '#'
+    }
+  ];
+
+  let adminOpen = false;
+
+  // ── Render ──
+  function render() {
+    const grid = document.getElementById('filesGrid');
+    grid.innerHTML = '';
+
+    if (files.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">📂</div>
+          <p>No files yet. Open "Manage files" to add one.</p>
+        </div>`;
+      return;
+    }
+
+    files.forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'file-card';
+      card.innerHTML = `
+        <div class="file-icon">${f.icon}</div>
+        <div class="file-name">${esc(f.name)}</div>
+        ${f.desc ? `<div class="file-desc">${esc(f.desc)}</div>` : ''}
+        ${f.size ? `<div class="file-meta">${esc(f.size)}</div>` : ''}
+        <div class="card-actions">
+          <a class="btn-dl" href="${esc(f.url)}" download target="_blank" rel="noopener">⬇ Download</a>
+          <button class="btn-remove" data-id="${f.id}">✕</button>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = Number(btn.dataset.id);
+        files = files.filter(f => f.id !== id);
+        save();
+        render();
+      });
+    });
+
+    if (adminOpen) document.body.classList.add('admin-mode');
+    else document.body.classList.remove('admin-mode');
+  }
+
+  // ── Save ──
+  function save() { localStorage.setItem(STORE, JSON.stringify(files)); }
+
+  // ── Escape HTML ──
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Toggle admin ──
+  document.getElementById('toggleAdmin').addEventListener('click', () => {
+    adminOpen = !adminOpen;
+    document.getElementById('adminPanel').classList.toggle('open', adminOpen);
+    document.body.classList.toggle('admin-mode', adminOpen);
+    document.getElementById('toggleAdmin').textContent = adminOpen ? '✕ Close' : '⚙ Manage files';
+  });
+
+  // ── Add file ──
+  document.getElementById('btnAdd').addEventListener('click', () => {
+    const name = document.getElementById('inName').value.trim();
+    const url  = document.getElementById('inUrl').value.trim();
+    const msg  = document.getElementById('statusMsg');
+
+    if (!name) { showStatus('Enter a file name.', 'err'); return; }
+    if (!url)  { showStatus('Enter a download URL.', 'err'); return; }
+    try { new URL(url); } catch { showStatus('URL looks invalid.', 'err'); return; }
+
+    files.push({
+      id:   Date.now(),
+      name,
+      desc: document.getElementById('inDesc').value.trim(),
+      size: document.getElementById('inSize').value.trim(),
+      icon: document.getElementById('inIcon').value,
+      url
+    });
+
+    save();
+    render();
+    showStatus('File added!', 'ok');
+
+    // Clear inputs
+    ['inName','inDesc','inSize','inUrl'].forEach(id => document.getElementById(id).value = '');
+  });
+
+  function showStatus(text, type) {
+    const el = document.getElementById('statusMsg');
+    el.textContent = text;
+    el.className = 'status-msg ' + type;
+    setTimeout(() => { el.textContent = ''; el.className = 'status-msg'; }, 3000);
+  }
+
+  render();
+</script>
+</body>
+</html>
